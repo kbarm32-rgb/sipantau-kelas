@@ -1,4 +1,4 @@
-# SIPANTAU KELAS v1.1 — Jalur B (GitHub + Supabase + Vercel)
+# SIPANTAU KELAS v1.2 — Jalur B (GitHub + Supabase + Vercel)
 
 Sistem Informasi Pemantauan Kehadiran dan Perkembangan Peserta Didik.
 Karya Digital: **Muhammad Akbar. M — SMKN 1 Maros** (Informatika / Fase E),
@@ -83,3 +83,21 @@ Catatan:
    pada catatan di atas (sekali saja; aman diulang).
 3. Buka aplikasi, Ctrl+F5, pastikan kaki halaman login bertuliskan
    "SIPANTAU KELAS v1.1", lalu coba impor dengan templat contoh.
+
+## Baru pada v1.2 — Panel Monitoring Dashboard
+
+Dashboard kini memuat empat panel pemantauan di bawah kartu statistik:
+
+- **Kehadiran 7 Hari Terakhir** — grafik batang persentase hadir
+  (termasuk Terlambat) per hari kalender; batang berwarna oranye bila
+  kehadiran suatu hari di bawah 75%; hari tanpa pencatatan ditandai "—".
+- **Rekap Presensi Terakhir** — rincian jumlah Hadir/Sakit/Izin/Alpa/
+  Terlambat pada tanggal pencatatan terakhir, beserta daftar nama
+  siswa yang tidak hadir untuk ditindaklanjuti.
+- **Aktivitas Terbaru** — lima entri terakhir Riwayat Perubahan.
+- **Catatan Perkembangan Terbaru** — tiga catatan terakhir.
+
+Seluruhnya dihitung dari data yang sudah dimuat aplikasi pada kedua
+mode; tidak ada perubahan skema dan tidak ada SQL tambahan.
+Pembaruan dari v1.1 cukup mengganti `index.html` (dan `VERSION.txt`)
+pada repo GitHub, lalu commit.

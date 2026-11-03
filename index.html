@@ -100,6 +100,16 @@ tr:last-child td{border-bottom:none}
 .btn[disabled]{opacity:.55; cursor:not-allowed}
 .catatan-item .meta{font-size:11.5px; color:var(--abu)}
 .kosong{text-align:center; color:var(--abu); padding:26px 10px; font-size:13px}
+.grafik{display:flex; gap:8px; height:158px; margin-top:12px}
+.grafik .kolom{flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; min-width:0}
+.grafik .g-nilai{font-size:11.5px; font-weight:700; color:var(--biru-tua); white-space:nowrap}
+.grafik .rel{flex:1; width:100%; display:flex; align-items:flex-end; justify-content:center; border-bottom:2px solid #dbe3ee}
+.grafik .batang{width:72%; max-width:44px; background:linear-gradient(180deg, var(--biru), var(--biru-tua)); border-radius:6px 6px 0 0}
+.grafik .batang.rendah{background:linear-gradient(180deg, #f5b04c, #d97706)}
+.grafik .batang.hampa{background:#dbe3ee}
+.grafik .g-hari{font-size:11px; color:var(--abu); text-align:center; line-height:1.3}
+.aktivitas-item{padding:9px 0; border-bottom:1px dashed #e2e8f0}
+.aktivitas-item:last-child{border-bottom:none}
 @media (max-width:900px){ .duo{grid-template-columns:1fr} }
 @media (max-width:860px){
   .layout{flex-direction:column}
@@ -143,7 +153,7 @@ tr:last-child td{border-bottom:none}
       <div><label>Kata Sandi</label><input id="inPass" type="password" autocomplete="current-password" required placeholder="••••••••"></div>
       <button class="btn" type="submit">Masuk</button>
     </form>
-    <p class="versi">SIPANTAU KELAS v1.1 • Karya Digital Muhammad Akbar. M<br><span id="modeLogin">Memeriksa konfigurasi server…</span></p>
+    <p class="versi">SIPANTAU KELAS v1.2 • Karya Digital Muhammad Akbar. M<br><span id="modeLogin">Memeriksa konfigurasi server…</span></p>
   </div>
 </div>
 
@@ -189,14 +199,16 @@ tr:last-child td{border-bottom:none}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* ============================================================
-   SIPANTAU KELAS v1.1 — Jalur B (GitHub + Supabase + Vercel)
+   SIPANTAU KELAS v1.2 — Jalur B (GitHub + Supabase + Vercel)
    v1.1: Fitur Impor Peserta Didik (CSV) di halaman Data Siswa.
+   v1.2: Panel monitoring pada Dashboard (grafik kehadiran 7 hari,
+   rekap presensi terakhir, aktivitas terbaru, catatan terbaru).
    Dual-mode: (1) Mode Supabase bila /api/config menyediakan
    SUPABASE_URL & SUPABASE_ANON_KEY dari Environment Variables
    Vercel; (2) Mode Demo lokal (localStorage, data contoh)
    bila belum dikonfigurasi — untuk uji coba LK-3/LK-4.
    ============================================================ */
-const VERSI = 'v1.1';
+const VERSI = 'v1.2';
 const STATUS_PRESENSI = ['Hadir','Sakit','Izin','Alpa','Terlambat'];
 const KATEGORI_CATATAN = ['Kedisiplinan','Perilaku','Akademik','Positif / Prestasi','Perlu Perhatian'];
 let MODE = 'demo';
@@ -399,6 +411,7 @@ function ringkasanKehadiran(tgl){
   const hadir = Object.values(p).filter(s=>s==='Hadir'||s==='Terlambat').length;
   return {total, terisi:Object.keys(p).length, persen: total? Math.round(hadir/total*1000)/10 : 0};
 }
+function potongTeks(s, n){ s = String(s||''); return s.length> n ? s.slice(0, n)+'…' : s; }
 function renderDashboard(){
   const el = document.getElementById('page-dashboard');
   const hariIni = tanggalISO(new Date());
@@ -409,6 +422,40 @@ function renderDashboard(){
     const alpa = Object.values(DB.presensi).filter(h=>h[s.id]==='Alpa').length;
     return alpa>0 || DB.catatan.some(c=>c.siswaId===s.id && c.kategori==='Perlu Perhatian') || DB.pendampingan.some(p=>p.siswaId===s.id && p.status==='Proses');
   });
+  // --- Panel 1: kehadiran 7 hari terakhir (hari kalender, termasuk hari ini) ---
+  const NAMA_HARI = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+  const tujuh = [];
+  for(let i=6;i>=0;i--){
+    const d = new Date(Date.now()-i*86400000);
+    const tgl = tanggalISO(d);
+    const rk = ringkasanKehadiran(tgl);
+    tujuh.push({tgl, label:NAMA_HARI[d.getDay()]+'<br>'+tgl.slice(8,10)+'/'+tgl.slice(5,7), terisi:rk.terisi, persen:rk.persen});
+  }
+  const adaPresensiPekan = tujuh.some(h=>h.terisi>0);
+  const grafik = `<div class="grafik">${tujuh.map(h=>`
+    <div class="kolom">
+      <div class="g-nilai">${h.terisi? h.persen+'%' : '—'}</div>
+      <div class="rel"><div class="batang ${h.terisi? (h.persen<75? 'rendah':'') : 'hampa'}" style="height:${h.terisi? Math.max(5, h.persen) : 5}%"></div></div>
+      <div class="g-hari">${h.label}</div>
+    </div>`).join('')}</div>
+    ${adaPresensiPekan? '' : '<p class="kosong" style="padding:10px">Belum ada presensi tercatat pada 7 hari terakhir.</p>'}`;
+  // --- Panel 2: rekap tanggal presensi terakhir ---
+  const tglList = Object.keys(DB.presensi).filter(t=>Object.keys(DB.presensi[t]||{}).length>0).sort();
+  const tglAkhir = tglList[tglList.length-1];
+  let rekapAkhir;
+  if(tglAkhir){
+    const isi = DB.presensi[tglAkhir];
+    const rkA = ringkasanKehadiran(tglAkhir);
+    rekapAkhir = `<p class="desc">Tanggal terakhir tercatat: <b>${tglAkhir}</b> • ${rkA.terisi} dari ${rkA.total} peserta didik tercatat • ${rkA.persen}% hadir/terlambat.</p>
+      <p style="margin-top:8px">${STATUS_PRESENSI.map(st=>`<span class="chip ${st}">${st}: ${Object.values(isi).filter(x=>x===st).length}</span>`).join(' ')}</p>
+      ${(()=>{ const tidak = DB.siswa.filter(s=>isi[s.id] && isi[s.id]!=='Hadir' && isi[s.id]!=='Terlambat');
+        return tidak.length? `<p style="margin-top:10px"><b>Perlu tindak lanjut:</b> ${tidak.map(s=>esc(s.nama)+' ('+isi[s.id]+')').join(', ')}</p>` : '<p style="margin-top:10px">Seluruh peserta didik yang tercatat hadir.</p>'; })()}`;
+  } else {
+    rekapAkhir = '<p class="kosong">Belum ada presensi tercatat. Mulai dari menu Presensi.</p>';
+  }
+  // --- Panel 3 & 4: aktivitas dan catatan terbaru ---
+  const aktivitas = DB.riwayat.slice(0,5);
+  const catatanBaru = DB.catatan.slice(0,3);
   el.innerHTML = `
     <h2>Dashboard Pemantauan</h2>
     <p class="desc">Kelas ${esc(DB.kelas.nama)} • ${esc(DB.kelas.jurusan)} • Tahun Ajaran ${esc(DB.kelas.tahun)} • SMKN 1 Maros</p>
@@ -419,7 +466,19 @@ function renderDashboard(){
       <div class="stat"><div class="angka">${menunggu}</div><div class="label">Dokumen Menunggu Verifikasi</div></div>
       <div class="stat"><div class="angka">${aktif}</div><div class="label">Pendampingan Aktif</div></div>
     </div>
-    <div class="card"><b>Peserta didik yang memerlukan perhatian</b>
+    <div class="duo" style="margin-top:16px">
+      <div class="card"><b>Kehadiran 7 Hari Terakhir</b>${grafik}</div>
+      <div class="card"><b>Rekap Presensi Terakhir</b><div style="margin-top:8px">${rekapAkhir}</div></div>
+    </div>
+    <div class="duo" style="margin-top:16px">
+      <div class="card"><b>Aktivitas Terbaru</b>
+        ${aktivitas.length? aktivitas.map(x=>`<div class="aktivitas-item"><b>${esc(x.aksi)}</b> — ${esc(potongTeks(x.detail, 90))}<br><span class="meta" style="color:var(--abu); font-size:12px">${esc(x.waktu)} • ${esc(x.pengguna)} (${esc(x.peran)})</span></div>`).join('') : '<p class="kosong">Belum ada aktivitas tercatat.</p>'}
+      </div>
+      <div class="card"><b>Catatan Perkembangan Terbaru</b>
+        ${catatanBaru.length? catatanBaru.map(c=>`<div class="aktivitas-item"><b>${esc(namaSiswa(c.siswaId))}</b> <span class="chip Proses">${esc(c.kategori)}</span><br>${esc(potongTeks(c.isi, 130))}<br><span class="meta" style="color:var(--abu); font-size:12px">${esc(c.tanggal)} • ${esc(c.oleh)}</span></div>`).join('') : '<p class="kosong">Belum ada catatan perkembangan.</p>'}
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px"><b>Peserta didik yang memerlukan perhatian</b>
       ${perhatian.length? `<div class="table-scroll"><table><tr><th>Nama</th><th>Alasan</th></tr>${perhatian.map(s=>{
         const alasan=[];
         const alpa = Object.values(DB.presensi).filter(h=>h[s.id]==='Alpa').length;
