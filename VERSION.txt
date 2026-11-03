@@ -1,0 +1,9 @@
+SIPANTAU KELAS v2026-11-03-v1.0
+Paket Jalur B: GitHub + Supabase + Vercel (dual-mode Demo/Supabase)
+Isi paket (5 berkas):
+1. index.html — aplikasi SIPANTAU KELAS v1.0 (8 bagian sesuai LK-2)
+2. api/config.js — jembatan Environment Variables Vercel (SUPABASE_URL, SUPABASE_ANON_KEY)
+3. supabase/schema.sql — skema database, RLS, storage, data contoh, template akun
+4. README.md — ringkasan paket dan langkah penerapan
+5. VERSION.txt — berkas ini
+Penanda versi di aplikasi: teks "SIPANTAU KELAS v1.0" pada kaki halaman login dan frasa "Jalur B (GitHub + Supabase + Vercel)" pada komentar di awal berkas index.html serta skrip utamanya.

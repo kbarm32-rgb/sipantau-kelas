@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIPANTAU KELAS — Sistem Informasi Pemantauan Kehadiran dan Perkembangan Peserta Didik</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --biru:#1d4ed8; --biru-tua:#1e3a8a; --biru-muda:#dbeafe; --langit:#eff6ff;
+  --abu-bg:#f1f5f9; --abu:#64748b; --abu-garis:#e2e8f0; --teks:#0f172a;
+  --hijau:#16a34a; --hijau-bg:#dcfce7; --kuning:#d97706; --kuning-bg:#fef3c7;
+  --merah:#dc2626; --merah-bg:#fee2e2; --oranye:#ea580c; --oranye-bg:#ffedd5;
+  --radius:14px;
+}
+*{box-sizing:border-box; margin:0; padding:0}
+body{font-family:'Poppins',Roboto,Arial,sans-serif; background:var(--abu-bg); color:var(--teks); font-size:14px; line-height:1.55}
+button{font-family:inherit; cursor:pointer}
+input,select,textarea{font-family:inherit; font-size:14px; padding:9px 12px; border:1.5px solid var(--abu-garis); border-radius:10px; background:#fff; width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--biru-muda); border-color:var(--biru)}
+label{font-size:12.5px; font-weight:600; color:var(--abu); display:block; margin:0 0 5px}
+.btn{background:var(--biru); color:#fff; border:none; padding:10px 18px; border-radius:10px; font-weight:600; font-size:13.5px}
+.btn:hover{background:var(--biru-tua)}
+.btn.sekunder{background:#fff; color:var(--biru); border:1.5px solid var(--biru)}
+.btn.kecil{padding:6px 12px; font-size:12.5px; border-radius:8px}
+.btn:disabled{background:#cbd5e1; color:#64748b; cursor:not-allowed}
+.btn.bahaya{background:var(--merah)}
+.chip{display:inline-block; padding:2px 10px; border-radius:999px; font-size:11.5px; font-weight:600}
+.chip.Hadir{background:var(--hijau-bg); color:var(--hijau)}
+.chip.Sakit{background:var(--kuning-bg); color:var(--kuning)}
+.chip.Izin{background:var(--biru-muda); color:var(--biru-tua)}
+.chip.Alpa{background:var(--merah-bg); color:var(--merah)}
+.chip.Terlambat{background:var(--oranye-bg); color:var(--oranye)}
+.chip.Menunggu{background:var(--kuning-bg); color:var(--kuning)}
+.chip.Terverifikasi{background:var(--hijau-bg); color:var(--hijau)}
+.chip.Ditolak{background:var(--merah-bg); color:var(--merah)}
+.chip.Proses{background:var(--biru-muda); color:var(--biru-tua)}
+.chip.Selesai{background:var(--hijau-bg); color:var(--hijau)}
+.card{background:#fff; border:1px solid var(--abu-garis); border-radius:var(--radius); padding:18px}
+table{width:100%; border-collapse:collapse; font-size:13.5px}
+th{text-align:left; color:var(--abu); font-size:12px; text-transform:uppercase; letter-spacing:.04em; padding:8px 10px; border-bottom:2px solid var(--abu-garis)}
+td{padding:9px 10px; border-bottom:1px solid var(--abu-garis); vertical-align:top}
+tr:last-child td{border-bottom:none}
+.toast{position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--teks); color:#fff; padding:12px 20px; border-radius:12px; font-size:13.5px; opacity:0; transition:.3s; z-index:99; max-width:90vw; text-align:center}
+.toast.tampil{transform:translateX(-50%) translateY(0); opacity:1}
+
+/* ---------- LOGIN ---------- */
+#loginView{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; background:linear-gradient(160deg, var(--biru-tua), var(--biru) 60%, #3b82f6)}
+.login-card{background:#fff; border-radius:20px; padding:34px 30px; width:100%; max-width:430px; box-shadow:0 24px 60px rgba(15,23,42,.35)}
+.logo-mark{width:58px; height:58px; border-radius:16px; background:var(--biru); color:#fff; display:flex; align-items:center; justify-content:center; font-size:27px; font-weight:700; margin-bottom:14px}
+.login-card h1{font-size:23px; color:var(--biru-tua); letter-spacing:.01em}
+.login-card .sub{color:var(--abu); font-size:12.5px; margin-bottom:6px}
+.sambutan{background:var(--langit); border:1px solid var(--biru-muda); border-radius:12px; padding:11px 14px; font-size:13px; margin:14px 0}
+.demo-box{background:#fffbeb; border:1px dashed var(--kuning); border-radius:12px; padding:11px 14px; font-size:12.5px; margin:14px 0}
+.demo-box b{color:var(--kuning)}
+.demo-box button{margin:4px 4px 0 0}
+.login-card form{display:grid; gap:12px; margin-top:6px}
+.login-err{display:none; background:var(--merah-bg); color:var(--merah); border-radius:10px; padding:9px 12px; font-size:12.5px}
+.versi{margin-top:18px; text-align:center; color:var(--abu); font-size:11.5px}
+
+/* ---------- APP ---------- */
+#appView{display:none; min-height:100vh}
+.layout{display:flex; min-height:100vh}
+.sidebar{width:238px; background:#fff; border-right:1px solid var(--abu-garis); padding:20px 14px; display:flex; flex-direction:column; gap:6px; position:sticky; top:0; height:100vh; flex-shrink:0}
+.brand{display:flex; align-items:center; gap:10px; padding:2px 8px 16px}
+.brand .logo-mark{width:42px; height:42px; border-radius:12px; font-size:20px; margin:0}
+.brand b{color:var(--biru-tua); font-size:15.5px; line-height:1.25}
+.brand small{color:var(--abu); font-size:10.5px; display:block; line-height:1.3}
+.user-card{background:var(--langit); border-radius:12px; padding:11px 13px; margin-bottom:12px}
+.user-card b{font-size:13.5px; display:block}
+.user-card span{font-size:11.5px; color:var(--biru); font-weight:600}
+.nav-btn{display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:none; border:none; padding:10px 12px; border-radius:10px; font-size:13.5px; font-weight:500; color:var(--teks)}
+.nav-btn:hover{background:var(--langit)}
+.nav-btn.aktif{background:var(--biru); color:#fff}
+.nav-btn .lencana{margin-left:auto; background:var(--merah); color:#fff; font-size:11px; font-weight:700; min-width:20px; height:20px; border-radius:999px; display:flex; align-items:center; justify-content:center; padding:0 5px}
+.sidebar .bawah{margin-top:auto; display:grid; gap:8px}
+.mode-info{font-size:11px; color:var(--abu); background:var(--abu-bg); border-radius:8px; padding:7px 10px; text-align:center}
+.main{flex:1; padding:24px; min-width:0}
+.main h2{font-size:20px; color:var(--biru-tua)}
+.main .desc{color:var(--abu); font-size:13px; margin-bottom:16px}
+.page{display:none}
+.page.aktif{display:block}
+.grid-stat{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:18px}
+.stat{background:#fff; border:1px solid var(--abu-garis); border-radius:var(--radius); padding:16px}
+.stat .angka{font-size:27px; font-weight:700; color:var(--biru-tua)}
+.stat .label{font-size:12px; color:var(--abu); font-weight:600}
+.duo{display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start}
+.form-grid{display:grid; gap:12px}
+.seg{display:flex; gap:4px; flex-wrap:wrap}
+.seg button{border:1.5px solid var(--abu-garis); background:#fff; border-radius:8px; padding:5px 10px; font-size:12px; font-weight:600; color:var(--abu)}
+.seg button.pilih-Hadir{background:var(--hijau-bg); border-color:var(--hijau); color:var(--hijau)}
+.seg button.pilih-Sakit{background:var(--kuning-bg); border-color:var(--kuning); color:var(--kuning)}
+.seg button.pilih-Izin{background:var(--biru-muda); border-color:var(--biru); color:var(--biru-tua)}
+.seg button.pilih-Alpa{background:var(--merah-bg); border-color:var(--merah); color:var(--merah)}
+.seg button.pilih-Terlambat{background:var(--oranye-bg); border-color:var(--oranye); color:var(--oranye)}
+.toolbar{display:flex; gap:10px; flex-wrap:wrap; align-items:end; margin-bottom:14px}
+.toolbar .grow{flex:1; min-width:170px}
+.catatan-item{border:1px solid var(--abu-garis); border-radius:12px; padding:13px 15px; margin-bottom:10px; background:#fff}
+.catatan-item .meta{font-size:11.5px; color:var(--abu)}
+.kosong{text-align:center; color:var(--abu); padding:26px 10px; font-size:13px}
+@media (max-width:900px){ .duo{grid-template-columns:1fr} }
+@media (max-width:860px){
+  .layout{flex-direction:column}
+  .sidebar{width:100%; height:auto; position:static; flex-direction:row; flex-wrap:wrap; align-items:center}
+  .brand{padding-bottom:2px}
+  .user-card{margin:0}
+  .nav-btn{width:auto}
+  .sidebar .bawah{margin:0; display:flex}
+  .main{padding:16px}
+  .table-scroll{overflow-x:auto}
+}
+@media print{
+  .sidebar, .no-print{display:none !important}
+  .layout{display:block}
+  .main{padding:0}
+  .page{display:none !important}
+  #page-laporan{display:block !important}
+  body{background:#fff}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="loginView">
+  <div class="login-card">
+    <div class="logo-mark">S</div>
+    <h1>SIPANTAU KELAS</h1>
+    <p class="sub">Sistem Informasi Pemantauan Kehadiran dan Perkembangan Peserta Didik<br>SMKN 1 Maros</p>
+    <div class="sambutan">Selamat Datang di SIPANTAU KELAS – Sistem Informasi Pemantauan Kehadiran dan Perkembangan Peserta Didik.</div>
+    <div class="demo-box" id="demoBox">
+      <b>Mode Demo — akun contoh (data fiktif):</b><br>
+      <button type="button" class="btn sekunder kecil" onclick="isiDemo('admin')">Admin</button>
+      <button type="button" class="btn sekunder kecil" onclick="isiDemo('walikelas')">Wali Kelas</button>
+      <button type="button" class="btn sekunder kecil" onclick="isiDemo('guru')">Guru Mapel</button>
+      <div style="margin-top:6px">Kata sandi demo: admin123 / wali123 / guru123</div>
+    </div>
+    <div class="login-err" id="loginErr"></div>
+    <form id="loginForm">
+      <div><label id="lblUser">Nama Pengguna / Email</label><input id="inUser" autocomplete="username" required placeholder="mis. walikelas"></div>
+      <div><label>Kata Sandi</label><input id="inPass" type="password" autocomplete="current-password" required placeholder="••••••••"></div>
+      <button class="btn" type="submit">Masuk</button>
+    </form>
+    <p class="versi">SIPANTAU KELAS v1.0 • Karya Digital Muhammad Akbar. M<br><span id="modeLogin">Memeriksa konfigurasi server…</span></p>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="appView">
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo-mark">S</div>
+        <div><b>SIPANTAU KELAS</b><small>Pemantauan Kehadiran &amp; Perkembangan Peserta Didik</small></div>
+      </div>
+      <div class="user-card"><b id="uNama">—</b><span id="uPeran">—</span></div>
+      <nav id="navMenu">
+        <button class="nav-btn aktif" data-page="dashboard">📊 Dashboard</button>
+        <button class="nav-btn" data-page="siswa">🎓 Data Siswa</button>
+        <button class="nav-btn" data-page="presensi">🗓️ Presensi</button>
+        <button class="nav-btn" data-page="monitoring">📈 Monitoring</button>
+        <button class="nav-btn" data-page="verifikasi">🛡️ Verifikasi Dokumen <span class="lencana" id="lencanaVerif" style="display:none">0</span></button>
+        <button class="nav-btn" data-page="pendampingan">🤝 Pendampingan</button>
+        <button class="nav-btn" data-page="laporan">📄 Laporan</button>
+        <button class="nav-btn" data-page="riwayat">🕘 Riwayat Perubahan</button>
+      </nav>
+      <div class="bawah">
+        <div class="mode-info" id="modeInfo">Mode: Demo (data contoh)</div>
+        <button class="btn sekunder kecil" id="btnReset" onclick="aturUlang()">Atur Ulang Data Contoh</button>
+        <button class="btn kecil" onclick="keluar()">Keluar</button>
+      </div>
+    </aside>
+    <main class="main">
+      <section class="page aktif" id="page-dashboard"></section>
+      <section class="page" id="page-siswa"></section>
+      <section class="page" id="page-presensi"></section>
+      <section class="page" id="page-monitoring"></section>
+      <section class="page" id="page-verifikasi"></section>
+      <section class="page" id="page-pendampingan"></section>
+      <section class="page" id="page-laporan"></section>
+      <section class="page" id="page-riwayat"></section>
+    </main>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ============================================================
+   SIPANTAU KELAS v1.0 — Jalur B (GitHub + Supabase + Vercel)
+   Dual-mode: (1) Mode Supabase bila /api/config menyediakan
+   SUPABASE_URL & SUPABASE_ANON_KEY dari Environment Variables
+   Vercel; (2) Mode Demo lokal (localStorage, data contoh)
+   bila belum dikonfigurasi — untuk uji coba LK-3/LK-4.
+   ============================================================ */
+const VERSI = 'v1.0';
+const STATUS_PRESENSI = ['Hadir','Sakit','Izin','Alpa','Terlambat'];
+const KATEGORI_CATATAN = ['Kedisiplinan','Perilaku','Akademik','Positif / Prestasi','Perlu Perhatian'];
+let MODE = 'demo';
+let sb = null;
+let sesi = null; // {nama, peran, email}
+
+/* ---------------- DATA CONTOH (FIKSI) ---------------- */
+function dataContoh(){
+  const siswa = [
+    ['Andi Pratama','26001','L'],['Siti Rahmawati','26002','P'],['Budi Hartono','26003','L'],
+    ['Nur Aisyah','26004','P'],['Rizky Ramadhan','26005','L'],['Dewi Anggraini','26006','P'],
+    ['Fajar Nugroho','26007','L'],['Intan Permata','26008','P'],['Hendra Wijaya','26009','L'],
+    ['Maya Kusuma','26010','P'],['Rian Saputra','26011','L'],['Fitri Handayani','26012','P'],
+    ['Agus Salim','26013','L'],['Rina Marlina','26014','P'],['Dedi Kurniawan','26015','L']
+  ].map((s,i)=>({id:'s'+(i+1), nama:s[0], nis:s[1], jk:s[2]}));
+  const hariIni = tanggalISO(new Date());
+  const kemarin = tanggalISO(new Date(Date.now()-86400000));
+  const presensi = {}; presensi[kemarin]={}; presensi[hariIni]={};
+  siswa.forEach((s,i)=>{ presensi[kemarin][s.id] = i===10 ? 'Terlambat' : 'Hadir'; });
+  siswa.forEach((s,i)=>{ presensi[hariIni][s.id] = i===3 ? 'Sakit' : 'Hadir'; });
+  return {
+    kelas:{id:'k1', nama:'X RPL 1', jurusan:'Rekayasa Perangkat Lunak', tahun:'2026/2027'},
+    siswa, presensi,
+    catatan:[
+      {id:'c1', siswaId:'s11', kategori:'Perlu Perhatian', tanggal:kemarin, oleh:'Sari Wulandari, S.Pd.', peran:'Wali Kelas', isi:'Terlambat tiga kali dalam dua pekan terakhir; perlu ditelusuri penyebabnya.'},
+      {id:'c2', siswaId:'s6', kategori:'Positif / Prestasi', tanggal:kemarin, oleh:'Budi Hartono, S.Pd.', peran:'Guru Mata Pelajaran', isi:'Membantu teman kelompok memahami materi dan presentasi dengan baik.'},
+      {id:'c3', siswaId:'s5', kategori:'Akademik', tanggal:kemarin, oleh:'Budi Hartono, S.Pd.', peran:'Guru Mata Pelajaran', isi:'Nilai kuis Informatika meningkat dari 62 menjadi 84.'},
+      {id:'c4', siswaId:'s13', kategori:'Kedisiplinan', tanggal:kemarin, oleh:'Sari Wulandari, S.Pd.', peran:'Wali Kelas', isi:'Tidak membawa atribut lengkap saat upacara; sudah diingatkan.'},
+      {id:'c5', siswaId:'s2', kategori:'Perilaku', tanggal:hariIni, oleh:'Sari Wulandari, S.Pd.', peran:'Wali Kelas', isi:'Aktif dan sopan dalam diskusi kelas.'}
+    ],
+    dokumen:[
+      {id:'d1', siswaId:'s4', jenis:'Surat Keterangan Sakit', tanggal:hariIni, keterangan:'Surat dari puskesmas, sakit demam 1 hari (contoh).', status:'Menunggu', fileNama:'surat-sakit-contoh.pdf', filePath:null, keputusan:null},
+      {id:'d2', siswaId:'s9', jenis:'Surat Izin Orang Tua', tanggal:hariIni, keterangan:'Izin menghadiri acara keluarga (contoh).', status:'Menunggu', fileNama:'surat-izin-contoh.jpg', filePath:null, keputusan:null},
+      {id:'d3', siswaId:'s7', jenis:'Surat Keterangan Sakit', tanggal:kemarin, keterangan:'Surat keterangan dokter (contoh).', status:'Menunggu', fileNama:'surat-dokter-contoh.pdf', filePath:null, keputusan:null},
+      {id:'d4', siswaId:'s12', jenis:'Surat Izin Orang Tua', tanggal:kemarin, keterangan:'Izin orang tua (contoh) — sudah diperiksa.', status:'Terverifikasi', fileNama:'surat-izin-2-contoh.jpg', filePath:null, keputusan:{oleh:'Sari Wulandari, S.Pd.', waktu:kemarin+' 07.15'}}
+    ],
+    pendampingan:[
+      {id:'p1', siswaId:'s11', kebutuhan:'Keterlambatan berulang', tindakan:'Pembinaan oleh wali kelas dan komunikasi dengan orang tua', hasil:'Orang tua menyampaikan kendala transportasi pagi', rencana:'Pantau kehadiran 2 pekan; berangkat lebih awal dengan antar-jemput tetangga', status:'Proses'},
+      {id:'p2', siswaId:'s13', kebutuhan:'Kedisiplinan atribut sekolah', tindakan:'Pengingatan dan kesepakatan tertulis sederhana', hasil:'Murid berkomitmen membawa atribut lengkap', rencana:'Periksa kembali pada upacara berikutnya', status:'Proses'},
+      {id:'p3', siswaId:'s3', kebutuhan:'Kesulitan mengikuti pelajaran produktif', tindakan:'Pendampingan belajar kelompok dengan tutor sebaya', hasil:'Nilai tugas kelompok membaik', rencana:'Selesai — lanjutkan pemantauan berkala', status:'Selesai'}
+    ],
+    riwayat:[
+      {waktu:kemarin+' 07.05', pengguna:'Sistem', peran:'—', aksi:'Data contoh dimuat', detail:'Prototipe SIPANTAU KELAS v0.1 dengan data fiktif Kelas X RPL 1.'}
+    ]
+  };
+}
+const AKUN_DEMO = {
+  admin:{pass:'admin123', nama:'Admin Sekolah (Contoh)', peran:'Administrator'},
+  walikelas:{pass:'wali123', nama:'Sari Wulandari, S.Pd.', peran:'Wali Kelas'},
+  guru:{pass:'guru123', nama:'Budi Hartono, S.Pd.', peran:'Guru Mata Pelajaran'}
+};
+const LABEL_PERAN = {admin:'Administrator', walikelas:'Wali Kelas', guru:'Guru Mata Pelajaran'};
+
+/* ---------------- STATE ---------------- */
+let DB = null;
+function muatLokal(){
+  try{ const r = localStorage.getItem('sipantau_kelas_v1'); if(r){ DB = JSON.parse(r); return; } }catch(e){}
+  DB = dataContoh(); simpanLokal();
+}
+function simpanLokal(){ if(MODE==='demo'){ try{ localStorage.setItem('sipantau_kelas_v1', JSON.stringify(DB)); }catch(e){} } }
+function tanggalISO(d){ return d.toISOString().slice(0,10); }
+function waktuSekarang(){ const d=new Date(); return tanggalISO(d)+' '+String(d.getHours()).padStart(2,'0')+'.'+String(d.getMinutes()).padStart(2,'0'); }
+function esc(s){ return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function namaSiswa(id){ const s = DB.siswa.find(x=>x.id===id); return s ? s.nama : '(siswa)'; }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('tampil'); setTimeout(()=>t.classList.remove('tampil'), 2800); }
+function bolehVerifikasi(){ return sesi && (sesi.peran==='Administrator' || sesi.peran==='Wali Kelas'); }
+function bolehKelolaSiswa(){ return sesi && (sesi.peran==='Administrator' || sesi.peran==='Wali Kelas'); }
+
+async function catatRiwayat(aksi, detail){
+  const entri = {waktu:waktuSekarang(), pengguna:sesi? sesi.nama:'—', peran:sesi? sesi.peran:'—', aksi, detail};
+  DB.riwayat.unshift(entri);
+  if(MODE==='supabase' && sb){
+    try{ await sb.from('riwayat').insert({pengguna:entri.pengguna, peran:entri.peran, aksi, detail}); }catch(e){}
+  }
+  simpanLokal();
+}
+
+/* ---------------- INISIALISASI MODE ---------------- */
+async function init(){
+  muatLokal();
+  try{
+    const r = await fetch('/api/config');
+    if(r.ok){
+      const cfg = await r.json();
+      if(cfg && cfg.configured && window.supabase){
+        sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+        MODE = 'supabase';
+      }
+    }
+  }catch(e){ /* tetap demo */ }
+  const modeLogin = document.getElementById('modeLogin');
+  if(MODE==='supabase'){
+    document.getElementById('demoBox').style.display='none';
+    document.getElementById('inUser').placeholder='nama@email.sch.id';
+    modeLogin.textContent='Mode: Server (Supabase) — masuk dengan email dan kata sandi akun sekolah.';
+    document.getElementById('btnReset').style.display='none';
+  } else {
+    modeLogin.textContent='Mode: Demo lokal — data contoh tersimpan di peramban ini.';
+  }
+  // pulihkan sesi demo
+  try{
+    const s = sessionStorage.getItem('sipantau_sesi');
+    if(s && MODE==='demo'){ sesi = JSON.parse(s); masukAplikasi(); }
+  }catch(e){}
+}
+
+function isiDemo(u){
+  document.getElementById('inUser').value = u;
+  document.getElementById('inPass').value = AKUN_DEMO[u].pass;
+}
+
+document.getElementById('loginForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const err = document.getElementById('loginErr'); err.style.display='none';
+  const user = document.getElementById('inUser').value.trim();
+  const pass = document.getElementById('inPass').value;
+  if(MODE==='demo'){
+    const akun = AKUN_DEMO[user.toLowerCase()];
+    if(!akun || akun.pass !== pass){ err.textContent='Nama pengguna atau kata sandi demo tidak cocok. Gunakan tombol akun contoh di atas.'; err.style.display='block'; return; }
+    sesi = {nama:akun.nama, peran:akun.peran, email:user.toLowerCase()};
+    sessionStorage.setItem('sipantau_sesi', JSON.stringify(sesi));
+    await catatRiwayat('Masuk (demo)', 'Masuk sebagai '+akun.peran);
+    masukAplikasi(); toast('Selamat datang, '+akun.nama);
+  } else {
+    try{
+      const {data, error} = await sb.auth.signInWithPassword({email:user, password:pass});
+      if(error) throw error;
+      const {data:profil, error:e2} = await sb.from('profiles').select('*').eq('id', data.user.id).single();
+      if(e2 || !profil) throw new Error('Akun masuk, tetapi profil peran belum dibuat. Hubungi administrator (lihat Panduan Deploy, langkah pembuatan akun).');
+      sesi = {nama:profil.nama, peran:LABEL_PERAN[profil.peran]||profil.peran, email:user};
+      await muatDariSupabase();
+      await catatRiwayat('Masuk', 'Masuk sebagai '+sesi.peran);
+      masukAplikasi(); toast('Selamat datang, '+sesi.nama);
+    }catch(ex){ err.textContent = 'Gagal masuk: '+(ex.message||ex); err.style.display='block'; }
+  }
+});
+
+async function muatDariSupabase(){
+  const ambil = async (tabel, urut) => { let q = sb.from(tabel).select('*'); if(urut) q = q.order(urut.kolom, {ascending:urut.asc}); const {data, error} = await q; if(error) throw error; return data||[]; };
+  const kelasRows = await ambil('kelas');
+  const kelas = kelasRows[0] || {id:null, nama:'—', jurusan:'—', tahun:'—'};
+  const siswaRows = await ambil('siswa');
+  const siswa = siswaRows.filter(s=>!kelas.id || s.kelas_id===kelas.id).map(s=>({id:s.id, nama:s.nama, nis:s.nis, jk:s.jk}));
+  const presRows = await ambil('presensi');
+  const presensi = {};
+  presRows.forEach(r=>{ if(!presensi[r.tanggal]) presensi[r.tanggal]={}; presensi[r.tanggal][r.siswa_id]=r.status; });
+  const catRows = await ambil('catatan', {kolom:'tanggal', asc:false});
+  const catatan = catRows.map(c=>({id:c.id, siswaId:c.siswa_id, kategori:c.kategori, tanggal:c.tanggal, oleh:c.oleh, peran:c.peran, isi:c.isi}));
+  const dokRows = await ambil('dokumen', {kolom:'tanggal', asc:false});
+  const dokumen = dokRows.map(dk=>({id:dk.id, siswaId:dk.siswa_id, jenis:dk.jenis, tanggal:dk.tanggal, keterangan:dk.keterangan, status:dk.status, fileNama:dk.file_nama, filePath:dk.file_path, keputusan: dk.keputusan_oleh ? {oleh:dk.keputusan_oleh, waktu:dk.keputusan_waktu||''} : null}));
+  const penRows = await ambil('pendampingan');
+  const pendampingan = penRows.map(p=>({id:p.id, siswaId:p.siswa_id, kebutuhan:p.kebutuhan, tindakan:p.tindakan, hasil:p.hasil, rencana:p.rencana, status:p.status}));
+  const riwRows = await ambil('riwayat', {kolom:'id', asc:false});
+  const riwayat = riwRows.slice(0,150).map(r=>({waktu:(r.dibuat_pada||'').toString().replace('T',' ').slice(0,16), pengguna:r.pengguna, peran:r.peran, aksi:r.aksi, detail:r.detail}));
+  DB = {kelas:{id:kelas.id, nama:kelas.nama, jurusan:kelas.jurusan, tahun:kelas.tahun}, siswa, presensi, catatan, dokumen, pendampingan, riwayat};
+}
+
+function masukAplikasi(){
+  document.getElementById('loginView').style.display='none';
+  document.getElementById('appView').style.display='block';
+  document.getElementById('uNama').textContent = sesi.nama;
+  document.getElementById('uPeran').textContent = sesi.peran + (MODE==='demo' ? ' • Demo' : '');
+  document.getElementById('modeInfo').textContent = MODE==='demo' ? 'Mode: Demo (data contoh di peramban ini)' : 'Mode: Server (Supabase)';
+  renderSemua();
+}
+async function keluar(){
+  if(MODE==='supabase' && sb){ try{ await sb.auth.signOut(); }catch(e){} }
+  sesi = null; sessionStorage.removeItem('sipantau_sesi');
+  document.getElementById('appView').style.display='none';
+  document.getElementById('loginView').style.display='flex';
+}
+function aturUlang(){
+  if(MODE!=='demo') return;
+  if(!confirm('Atur ulang seluruh data contoh ke kondisi awal?')) return;
+  DB = dataContoh(); simpanLokal(); renderSemua(); toast('Data contoh diatur ulang.');
+}
+
+/* ---------------- NAVIGASI ---------------- */
+document.querySelectorAll('.nav-btn').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    document.querySelectorAll('.nav-btn').forEach(x=>x.classList.remove('aktif'));
+    b.classList.add('aktif');
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('aktif'));
+    document.getElementById('page-'+b.dataset.page).classList.add('aktif');
+    renderSemua();
+  });
+});
+function renderSemua(){
+  if(!sesi) return;
+  const menunggu = DB.dokumen.filter(d=>d.status==='Menunggu').length;
+  const lencana = document.getElementById('lencanaVerif');
+  lencana.style.display = menunggu>0 ? 'flex' : 'none'; lencana.textContent = menunggu;
+  renderDashboard(); renderSiswa(); renderPresensi(); renderMonitoring(); renderVerifikasi(); renderPendampingan(); renderLaporan(); renderRiwayat();
+}
+
+/* ---------------- DASHBOARD ---------------- */
+function ringkasanKehadiran(tgl){
+  const p = DB.presensi[tgl] || {};
+  const total = DB.siswa.length;
+  const hadir = Object.values(p).filter(s=>s==='Hadir'||s==='Terlambat').length;
+  return {total, terisi:Object.keys(p).length, persen: total? Math.round(hadir/total*1000)/10 : 0};
+}
+function renderDashboard(){
+  const el = document.getElementById('page-dashboard');
+  const hariIni = tanggalISO(new Date());
+  const r = ringkasanKehadiran(hariIni);
+  const menunggu = DB.dokumen.filter(d=>d.status==='Menunggu').length;
+  const aktif = DB.pendampingan.filter(p=>p.status==='Proses').length;
+  const perhatian = DB.siswa.filter(s=>{
+    const alpa = Object.values(DB.presensi).filter(h=>h[s.id]==='Alpa').length;
+    return alpa>0 || DB.catatan.some(c=>c.siswaId===s.id && c.kategori==='Perlu Perhatian') || DB.pendampingan.some(p=>p.siswaId===s.id && p.status==='Proses');
+  });
+  el.innerHTML = `
+    <h2>Dashboard Pemantauan</h2>
+    <p class="desc">Kelas ${esc(DB.kelas.nama)} • ${esc(DB.kelas.jurusan)} • Tahun Ajaran ${esc(DB.kelas.tahun)} • SMKN 1 Maros</p>
+    <div class="grid-stat">
+      <div class="stat"><div class="angka">${DB.siswa.length}</div><div class="label">Peserta Didik</div></div>
+      <div class="stat"><div class="angka">${r.persen}%</div><div class="label">Kehadiran Hari Ini (${r.terisi}/${r.total} tercatat)</div></div>
+      <div class="stat"><div class="angka">${DB.catatan.length}</div><div class="label">Catatan Perkembangan</div></div>
+      <div class="stat"><div class="angka">${menunggu}</div><div class="label">Dokumen Menunggu Verifikasi</div></div>
+      <div class="stat"><div class="angka">${aktif}</div><div class="label">Pendampingan Aktif</div></div>
+    </div>
+    <div class="card"><b>Peserta didik yang memerlukan perhatian</b>
+      ${perhatian.length? `<div class="table-scroll"><table><tr><th>Nama</th><th>Alasan</th></tr>${perhatian.map(s=>{
+        const alasan=[];
+        const alpa = Object.values(DB.presensi).filter(h=>h[s.id]==='Alpa').length;
+        if(alpa>0) alasan.push(alpa+' kali Alpa');
+        if(DB.catatan.some(c=>c.siswaId===s.id && c.kategori==='Perlu Perhatian')) alasan.push('ada catatan Perlu Perhatian');
+        if(DB.pendampingan.some(p=>p.siswaId===s.id && p.status==='Proses')) alasan.push('sedang dalam pendampingan');
+        return `<tr><td>${esc(s.nama)}</td><td>${alasan.join('; ')}</td></tr>`;}).join('')}</table></div>`
+      : '<p class="kosong">Tidak ada peserta didik yang memerlukan perhatian khusus saat ini.</p>'}
+    </div>`;
+}
+/* ---------------- DATA SISWA & PROFIL ---------------- */
+let siswaTerpilih = null;
+function renderSiswa(){
+  const el = document.getElementById('page-siswa');
+  const cari = (document.getElementById('cariSiswa')||{}).value || '';
+  const daftar = DB.siswa.filter(s=>s.nama.toLowerCase().includes(cari.toLowerCase()));
+  let profil = '';
+  if(siswaTerpilih){
+    const s = DB.siswa.find(x=>x.id===siswaTerpilih);
+    if(s){
+      const hadir = hitungSiswa(s.id);
+      const cat = DB.catatan.filter(c=>c.siswaId===s.id);
+      const pen = DB.pendampingan.filter(p=>p.siswaId===s.id);
+      profil = `<div class="card" style="margin-top:16px">
+        <b style="font-size:16px; color:var(--biru-tua)">${esc(s.nama)}</b>
+        <p class="meta" style="color:var(--abu); font-size:12.5px">NIS ${esc(s.nis)} • ${s.jk==='L'?'Laki-laki':'Perempuan'} • Kelas ${esc(DB.kelas.nama)} • ${esc(DB.kelas.jurusan)}</p>
+        <p style="margin-top:8px">Kehadiran tercatat: Hadir/Terlambat ${hadir.hadir} • Sakit ${hadir.Sakit} • Izin ${hadir.Izin} • Alpa ${hadir.Alpa} dari ${hadir.total} hari tercatat.</p>
+        <p style="margin-top:6px"><b>Catatan perkembangan (${cat.length}):</b></p>
+        ${cat.length? cat.map(c=>`<p>• [${esc(c.kategori)}] ${esc(c.isi)} <span style="color:var(--abu); font-size:12px">— ${esc(c.tanggal)}, ${esc(c.oleh)}</span></p>`).join('') : '<p style="color:var(--abu)">Belum ada catatan.</p>'}
+        <p style="margin-top:6px"><b>Pendampingan (${pen.length}):</b></p>
+        ${pen.length? pen.map(p=>`<p>• ${esc(p.kebutuhan)} — <span class="chip ${p.status}">${p.status}</span></p>`).join('') : '<p style="color:var(--abu)">Belum ada pendampingan.</p>'}
+      </div>`;
+    }
+  }
+  el.innerHTML = `
+    <h2>Data Siswa dan Kelas</h2>
+    <p class="desc">Kelas ${esc(DB.kelas.nama)} • ${esc(DB.kelas.jurusan)} • Tahun Ajaran ${esc(DB.kelas.tahun)}</p>
+    <div class="toolbar no-print">
+      <div class="grow"><label>Cari nama peserta didik</label><input id="cariSiswa" value="${esc(cari)}" oninput="renderSiswa(); jagaFokusCari()" placeholder="Ketik nama…"></div>
+    </div>
+    <div class="card"><div class="table-scroll"><table>
+      <tr><th>No</th><th>Nama</th><th>NIS</th><th>L/P</th><th></th></tr>
+      ${daftar.map((s,i)=>`<tr><td>${i+1}</td><td>${esc(s.nama)}</td><td>${esc(s.nis)}</td><td>${esc(s.jk)}</td><td><button class="btn sekunder kecil" onclick="siswaTerpilih='${s.id}'; renderSiswa()">Detail</button></td></tr>`).join('') || '<tr><td colspan="5" class="kosong">Tidak ditemukan.</td></tr>'}
+    </table></div></div>
+    ${profil}
+    ${bolehKelolaSiswa()? `<div class="card" style="margin-top:16px"><b>Tambah Peserta Didik</b>
+      <form class="form-grid" style="margin-top:10px" onsubmit="return tambahSiswa(event)">
+        <div class="duo" style="gap:10px">
+          <div><label>Nama lengkap</label><input id="tsNama" required></div>
+          <div><label>NIS</label><input id="tsNis" required></div>
+        </div>
+        <div><label>Jenis kelamin</label><select id="tsJk"><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></div>
+        <button class="btn">Simpan Peserta Didik</button>
+      </form></div>` : '<p class="desc" style="margin-top:12px">Peran Anda dapat melihat data siswa; pengelolaan data dilakukan Administrator / Wali Kelas.</p>'}
+  `;
+}
+function jagaFokusCari(){ const i=document.getElementById('cariSiswa'); if(i){ i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
+function hitungSiswa(id){
+  const h = {hadir:0, Sakit:0, Izin:0, Alpa:0, total:0};
+  Object.values(DB.presensi).forEach(hari=>{ const st = hari[id]; if(st){ h.total++; if(st==='Hadir'||st==='Terlambat') h.hadir++; else h[st]++; } });
+  return h;
+}
+async function tambahSiswa(e){
+  e.preventDefault();
+  const nama = document.getElementById('tsNama').value.trim();
+  const nis = document.getElementById('tsNis').value.trim();
+  const jk = document.getElementById('tsJk').value;
+  if(!nama || !nis) return false;
+  let id = 's'+Date.now();
+  if(MODE==='supabase' && sb){
+    const {data, error} = await sb.from('siswa').insert({kelas_id:DB.kelas.id, nama, nis, jk}).select().single();
+    if(error){ toast('Gagal menyimpan: '+error.message); return false; }
+    id = data.id;
+  }
+  DB.siswa.push({id, nama, nis, jk});
+  await catatRiwayat('Tambah peserta didik', nama+' (NIS '+nis+') ditambahkan ke Kelas '+DB.kelas.nama);
+  simpanLokal(); renderSemua(); toast('Peserta didik ditambahkan.'); return false;
+}
+
+/* ---------------- PRESENSI ---------------- */
+let tglPresensi = tanggalISO(new Date());
+let draftPresensi = null;
+function renderPresensi(){
+  const el = document.getElementById('page-presensi');
+  if(!draftPresensi || draftPresensi._tgl !== tglPresensi){
+    draftPresensi = Object.assign({}, DB.presensi[tglPresensi]||{});
+    draftPresensi._tgl = tglPresensi;
+  }
+  const rekap = {}; STATUS_PRESENSI.forEach(s=>rekap[s]=0);
+  Object.values(DB.presensi).forEach(h=>Object.values(h).forEach(st=>{ if(rekap[st]!==undefined) rekap[st]++; }));
+  el.innerHTML = `
+    <h2>Presensi dan Rekap Kehadiran</h2>
+    <p class="desc">Pilih tanggal, tetapkan status setiap peserta didik, lalu simpan. Status: Hadir, Sakit, Izin, Alpa, Terlambat.</p>
+    <div class="toolbar no-print">
+      <div><label>Tanggal</label><input type="date" value="${tglPresensi}" onchange="tglPresensi=this.value; draftPresensi=null; renderPresensi()"></div>
+      <button class="btn" onclick="simpanPresensi()">Simpan Presensi</button>
+      <button class="btn sekunder" onclick="semuaHadir()">Semua Hadir</button>
+    </div>
+    <div class="card"><div class="table-scroll"><table>
+      <tr><th>Nama</th><th>Status Kehadiran</th></tr>
+      ${DB.siswa.map(s=>`<tr><td>${esc(s.nama)}</td><td><div class="seg">${STATUS_PRESENSI.map(st=>`<button type="button" class="${draftPresensi[s.id]===st? 'pilih-'+st:''}" onclick="draftPresensi['${s.id}']='${st}'; renderPresensi()">${st}</button>`).join('')}</div></td></tr>`).join('')}
+    </table></div></div>
+    <div class="card" style="margin-top:16px"><b>Rekap seluruh tanggal tercatat</b>
+      <p style="margin-top:6px">${STATUS_PRESENSI.map(st=>`<span class="chip ${st}">${st}: ${rekap[st]}</span>`).join(' ')}</p>
+      <div class="table-scroll" style="margin-top:10px"><table>
+        <tr><th>Nama</th><th>% Hadir (termasuk Terlambat)</th><th>Sakit</th><th>Izin</th><th>Alpa</th></tr>
+        ${DB.siswa.map(s=>{ const h=hitungSiswa(s.id); const persen = h.total? Math.round(h.hadir/h.total*1000)/10 : 0; return `<tr><td>${esc(s.nama)}</td><td>${h.total? persen+'%':'—'}</td><td>${h.Sakit}</td><td>${h.Izin}</td><td>${h.Alpa}</td></tr>`; }).join('')}
+      </table></div>
+    </div>`;
+}
+function semuaHadir(){ DB.siswa.forEach(s=>{ if(!draftPresensi[s.id]) draftPresensi[s.id]='Hadir'; }); renderPresensi(); }
+async function simpanPresensi(){
+  const bersih = {}; Object.keys(draftPresensi).forEach(k=>{ if(k!=='_tgl') bersih[k]=draftPresensi[k]; });
+  if(MODE==='supabase' && sb){
+    const baris = Object.entries(bersih).map(([sid, status])=>({siswa_id:sid, tanggal:tglPresensi, status, dicatat_oleh:sesi.nama}));
+    const {error} = await sb.from('presensi').upsert(baris, {onConflict:'siswa_id,tanggal'});
+    if(error){ toast('Gagal menyimpan ke server: '+error.message); return; }
+  }
+  DB.presensi[tglPresensi] = bersih;
+  await catatRiwayat('Simpan presensi', 'Presensi tanggal '+tglPresensi+' disimpan ('+Object.keys(bersih).length+' peserta didik).');
+  simpanLokal(); renderSemua(); toast('Presensi tanggal '+tglPresensi+' tersimpan.');
+}
+
+/* ---------------- MONITORING ---------------- */
+function renderMonitoring(){
+  const el = document.getElementById('page-monitoring');
+  el.innerHTML = `
+    <h2>Monitoring Perkembangan Siswa</h2>
+    <p class="desc">Catatan kedisiplinan, perilaku, perkembangan akademik, serta pengamatan positif dan hal yang memerlukan perhatian.</p>
+    <div class="duo">
+      <div>
+        ${DB.catatan.length? DB.catatan.map(c=>`<div class="catatan-item">
+          <b>${esc(namaSiswa(c.siswaId))}</b> <span class="chip Proses">${esc(c.kategori)}</span>
+          <p>${esc(c.isi)}</p>
+          <p class="meta">${esc(c.tanggal)} • dicatat oleh ${esc(c.oleh)} (${esc(c.peran)})</p>
+        </div>`).join('') : '<p class="kosong">Belum ada catatan perkembangan.</p>'}
+      </div>
+      <div class="card"><b>Tambah Catatan</b>
+        <form class="form-grid" style="margin-top:10px" onsubmit="return tambahCatatan(event)">
+          <div><label>Peserta didik</label><select id="mcSiswa">${DB.siswa.map(s=>`<option value="${s.id}">${esc(s.nama)}</option>`).join('')}</select></div>
+          <div><label>Kategori</label><select id="mcKategori">${KATEGORI_CATATAN.map(k=>`<option>${k}</option>`).join('')}</select></div>
+          <div><label>Tanggal</label><input type="date" id="mcTanggal" value="${tanggalISO(new Date())}"></div>
+          <div><label>Catatan</label><textarea id="mcIsi" rows="3" required placeholder="Tuliskan pengamatan perkembangan…"></textarea></div>
+          <button class="btn">Simpan Catatan</button>
+        </form>
+      </div>
+    </div>`;
+}
+async function tambahCatatan(e){
+  e.preventDefault();
+  const c = {id:'c'+Date.now(), siswaId:document.getElementById('mcSiswa').value, kategori:document.getElementById('mcKategori').value, tanggal:document.getElementById('mcTanggal').value, oleh:sesi.nama, peran:sesi.peran, isi:document.getElementById('mcIsi').value.trim()};
+  if(!c.isi) return false;
+  if(MODE==='supabase' && sb){
+    const {data, error} = await sb.from('catatan').insert({siswa_id:c.siswaId, kategori:c.kategori, tanggal:c.tanggal, oleh:c.oleh, peran:c.peran, isi:c.isi}).select().single();
+    if(error){ toast('Gagal menyimpan: '+error.message); return false; }
+    c.id = data.id;
+  }
+  DB.catatan.unshift(c);
+  await catatRiwayat('Tambah catatan perkembangan', '['+c.kategori+'] '+namaSiswa(c.siswaId)+': '+c.isi);
+  simpanLokal(); renderSemua(); toast('Catatan perkembangan tersimpan.'); return false;
+}
+
+/* ---------------- VERIFIKASI DOKUMEN ---------------- */
+function renderVerifikasi(){
+  const el = document.getElementById('page-verifikasi');
+  const bisa = bolehVerifikasi();
+  el.innerHTML = `
+    <h2>Verifikasi Dokumen</h2>
+    <p class="desc">Dokumen atau keterangan pendukung yang disampaikan peserta didik diperiksa oleh guru/wali kelas berwenang sebelum dinyatakan sah. Setiap keputusan tercatat pada Riwayat Perubahan.</p>
+    ${bisa? '' : '<p class="desc" style="color:var(--kuning)"><b>Catatan hak akses:</b> peran Anda ('+esc(sesi.peran)+') dapat melihat dokumen, tetapi keputusan verifikasi hanya untuk Administrator dan Wali Kelas.</p>'}
+    <div class="duo">
+      <div>
+      ${DB.dokumen.length? DB.dokumen.map(d=>`<div class="catatan-item">
+        <b>${esc(namaSiswa(d.siswaId))}</b> — ${esc(d.jenis)} <span class="chip ${d.status}">${d.status}</span>
+        <p>${esc(d.keterangan)}</p>
+        <p class="meta">${esc(d.tanggal)} • Berkas: ${esc(d.fileNama||'—')}${d.keputusan? ' • Keputusan oleh '+esc(d.keputusan.oleh)+' ('+esc(d.keputusan.waktu)+')':''}</p>
+        <p style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap">
+          <button class="btn sekunder kecil" onclick="lihatDokumen('${d.id}')">Lihat Dokumen</button>
+          <button class="btn kecil" ${bisa && d.status==='Menunggu'? '' : 'disabled'} onclick="keputusanDokumen('${d.id}','Terverifikasi')">Verifikasi</button>
+          <button class="btn bahaya kecil" ${bisa && d.status==='Menunggu'? '' : 'disabled'} onclick="keputusanDokumen('${d.id}','Ditolak')">Tolak</button>
+        </p>
+        <div id="lihat-${d.id}"></div>
+      </div>`).join('') : '<p class="kosong">Belum ada dokumen yang diajukan.</p>'}
+      </div>
+      <div class="card"><b>Ajukan Dokumen / Keterangan</b>
+        <form class="form-grid" style="margin-top:10px" onsubmit="return tambahDokumen(event)">
+          <div><label>Peserta didik</label><select id="vdSiswa">${DB.siswa.map(s=>`<option value="${s.id}">${esc(s.nama)}</option>`).join('')}</select></div>
+          <div><label>Jenis dokumen</label><select id="vdJenis"><option>Surat Keterangan Sakit</option><option>Surat Izin Orang Tua</option><option>Dokumen Pendukung Lainnya</option></select></div>
+          <div><label>Tanggal</label><input type="date" id="vdTanggal" value="${tanggalISO(new Date())}"></div>
+          <div><label>Keterangan</label><textarea id="vdKet" rows="2" placeholder="Ringkasan isi dokumen…"></textarea></div>
+          <div><label>Berkas (opsional${MODE==='supabase' ? ', diunggah ke penyimpanan server' : ', pada mode demo hanya nama berkas yang dicatat'})</label><input type="file" id="vdFile"></div>
+          <button class="btn">Ajukan untuk Verifikasi</button>
+        </form>
+      </div>
+    </div>`;
+}
+async function lihatDokumen(id){
+  const d = DB.dokumen.find(x=>x.id===id); if(!d) return;
+  const box = document.getElementById('lihat-'+id);
+  let isi = `<div class="sambutan" style="margin-top:10px"><b>Ringkasan dokumen:</b> ${esc(d.jenis)} atas nama ${esc(namaSiswa(d.siswaId))}, tanggal ${esc(d.tanggal)}. ${esc(d.keterangan)}<br>Berkas: ${esc(d.fileNama||'—')}</div>`;
+  if(MODE==='supabase' && sb && d.filePath){
+    try{
+      const {data} = await sb.storage.from('dokumen').createSignedUrl(d.filePath, 120);
+      if(data && data.signedUrl) isi += `<p style="margin-top:6px"><a href="${data.signedUrl}" target="_blank" rel="noopener">Buka berkas asli (tautan sementara)</a></p>`;
+    }catch(e){}
+  } else if(MODE==='demo'){
+    isi += '<p style="font-size:12px; color:var(--abu); margin-top:4px">Mode demo: berkas contoh tidak disimpan; pada mode server berkas asli dapat dibuka dari sini.</p>';
+  }
+  box.innerHTML = isi;
+}
+async function keputusanDokumen(id, status){
+  const d = DB.dokumen.find(x=>x.id===id); if(!d || !bolehVerifikasi()) return;
+  if(MODE==='supabase' && sb){
+    const {error} = await sb.from('dokumen').update({status, keputusan_oleh:sesi.nama, keputusan_waktu:waktuSekarang()}).eq('id', id);
+    if(error){ toast('Gagal menyimpan keputusan: '+error.message); return; }
+  }
+  d.status = status; d.keputusan = {oleh:sesi.nama, waktu:waktuSekarang()};
+  await catatRiwayat('Verifikasi dokumen: '+status, d.jenis+' milik '+namaSiswa(d.siswaId)+' dinyatakan '+status.toLowerCase()+' oleh '+sesi.nama+'.');
+  simpanLokal(); renderSemua(); toast('Dokumen '+status.toLowerCase()+'. Keputusan tercatat di Riwayat Perubahan.');
+}
+async function tambahDokumen(e){
+  e.preventDefault();
+  const fileInput = document.getElementById('vdFile');
+  const file = fileInput.files && fileInput.files[0];
+  const d = {id:'d'+Date.now(), siswaId:document.getElementById('vdSiswa').value, jenis:document.getElementById('vdJenis').value, tanggal:document.getElementById('vdTanggal').value, keterangan:document.getElementById('vdKet').value.trim()||'(tanpa keterangan)', status:'Menunggu', fileNama: file? file.name : '—', filePath:null, keputusan:null};
+  if(MODE==='supabase' && sb){
+    if(file){
+      const path = Date.now()+'-'+file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+      const {error:eup} = await sb.storage.from('dokumen').upload(path, file);
+      if(eup){ toast('Gagal mengunggah berkas: '+eup.message); return false; }
+      d.filePath = path;
+    }
+    const {data, error} = await sb.from('dokumen').insert({siswa_id:d.siswaId, jenis:d.jenis, tanggal:d.tanggal, keterangan:d.keterangan, status:'Menunggu', file_nama:d.fileNama, file_path:d.filePath}).select().single();
+    if(error){ toast('Gagal menyimpan: '+error.message); return false; }
+    d.id = data.id;
+  }
+  DB.dokumen.unshift(d);
+  await catatRiwayat('Pengajuan dokumen', d.jenis+' milik '+namaSiswa(d.siswaId)+' diajukan untuk verifikasi.');
+  simpanLokal(); renderSemua(); toast('Dokumen diajukan dan menunggu verifikasi.'); return false;
+}
+
+/* ---------------- PENDAMPINGAN ---------------- */
+function renderPendampingan(){
+  const el = document.getElementById('page-pendampingan');
+  el.innerHTML = `
+    <h2>Pendampingan dan Tindak Lanjut</h2>
+    <p class="desc">Catatan kebutuhan pendampingan, tindakan yang dilakukan, hasil, dan rencana tindak lanjut peserta didik.</p>
+    <div class="duo">
+      <div>
+      ${DB.pendampingan.length? DB.pendampingan.map(p=>`<div class="catatan-item">
+        <b>${esc(namaSiswa(p.siswaId))}</b> <span class="chip ${p.status}">${p.status}</span>
+        <p><b>Kebutuhan:</b> ${esc(p.kebutuhan)}</p>
+        <p><b>Tindakan:</b> ${esc(p.tindakan)}</p>
+        <p><b>Hasil:</b> ${esc(p.hasil||'—')}</p>
+        <p><b>Rencana tindak lanjut:</b> ${esc(p.rencana||'—')}</p>
+        ${p.status==='Proses'? `<p style="margin-top:8px"><button class="btn kecil" onclick="selesaikanPendampingan('${p.id}')">Tandai Selesai</button></p>`:''}
+      </div>`).join('') : '<p class="kosong">Belum ada pendampingan.</p>'}
+      </div>
+      <div class="card"><b>Tambah Pendampingan</b>
+        <form class="form-grid" style="margin-top:10px" onsubmit="return tambahPendampingan(event)">
+          <div><label>Peserta didik</label><select id="pdSiswa">${DB.siswa.map(s=>`<option value="${s.id}">${esc(s.nama)}</option>`).join('')}</select></div>
+          <div><label>Kebutuhan / permasalahan</label><textarea id="pdButuh" rows="2" required></textarea></div>
+          <div><label>Tindakan yang dilakukan</label><textarea id="pdTindak" rows="2" required></textarea></div>
+          <div><label>Hasil sementara</label><textarea id="pdHasil" rows="2"></textarea></div>
+          <div><label>Rencana tindak lanjut</label><textarea id="pdRencana" rows="2"></textarea></div>
+          <button class="btn">Simpan Pendampingan</button>
+        </form>
+      </div>
+    </div>`;
+}
+async function tambahPendampingan(e){
+  e.preventDefault();
+  const p = {id:'p'+Date.now(), siswaId:document.getElementById('pdSiswa').value, kebutuhan:document.getElementById('pdButuh').value.trim(), tindakan:document.getElementById('pdTindak').value.trim(), hasil:document.getElementById('pdHasil').value.trim(), rencana:document.getElementById('pdRencana').value.trim(), status:'Proses'};
+  if(!p.kebutuhan || !p.tindakan) return false;
+  if(MODE==='supabase' && sb){
+    const {data, error} = await sb.from('pendampingan').insert({siswa_id:p.siswaId, kebutuhan:p.kebutuhan, tindakan:p.tindakan, hasil:p.hasil, rencana:p.rencana, status:'Proses'}).select().single();
+    if(error){ toast('Gagal menyimpan: '+error.message); return false; }
+    p.id = data.id;
+  }
+  DB.pendampingan.unshift(p);
+  await catatRiwayat('Tambah pendampingan', namaSiswa(p.siswaId)+' — '+p.kebutuhan);
+  simpanLokal(); renderSemua(); toast('Pendampingan tercatat.'); return false;
+}
+async function selesaikanPendampingan(id){
+  const p = DB.pendampingan.find(x=>x.id===id); if(!p) return;
+  if(MODE==='supabase' && sb){
+    const {error} = await sb.from('pendampingan').update({status:'Selesai'}).eq('id', id);
+    if(error){ toast('Gagal memperbarui: '+error.message); return; }
+  }
+  p.status = 'Selesai';
+  await catatRiwayat('Pendampingan selesai', namaSiswa(p.siswaId)+' — '+p.kebutuhan+' ditandai selesai.');
+  simpanLokal(); renderSemua(); toast('Pendampingan ditandai selesai.');
+}
+
+/* ---------------- LAPORAN ---------------- */
+function renderLaporan(){
+  const el = document.getElementById('page-laporan');
+  el.innerHTML = `
+    <div class="no-print" style="display:flex; justify-content:space-between; align-items:end; flex-wrap:wrap; gap:10px">
+      <div><h2>Laporan Perkembangan</h2><p class="desc">Rekap kehadiran, perkembangan, dan pendampingan setiap peserta didik.</p></div>
+      <button class="btn" onclick="window.print()">Cetak Laporan</button>
+    </div>
+    <div class="card">
+      <div style="text-align:center; border-bottom:2px solid var(--biru-tua); padding-bottom:10px; margin-bottom:12px">
+        <b style="font-size:16px; color:var(--biru-tua)">LAPORAN PERKEMBANGAN PESERTA DIDIK</b><br>
+        <span style="font-size:12.5px">SIPANTAU KELAS • Kelas ${esc(DB.kelas.nama)} — ${esc(DB.kelas.jurusan)} • SMKN 1 Maros • Tahun Ajaran ${esc(DB.kelas.tahun)}</span>
+      </div>
+      <div class="table-scroll"><table>
+        <tr><th>Nama</th><th>Kehadiran</th><th>Catatan Perkembangan</th><th>Pendampingan</th></tr>
+        ${DB.siswa.map(s=>{
+          const h = hitungSiswa(s.id);
+          const persen = h.total? Math.round(h.hadir/h.total*1000)/10 : 0;
+          const cat = DB.catatan.filter(c=>c.siswaId===s.id);
+          const pen = DB.pendampingan.filter(p=>p.siswaId===s.id);
+          return `<tr>
+            <td><b>${esc(s.nama)}</b><br><span style="color:var(--abu); font-size:12px">NIS ${esc(s.nis)}</span></td>
+            <td>${h.total? persen+'% hadir<br><span style="font-size:12px">Sakit '+h.Sakit+' • Izin '+h.Izin+' • Alpa '+h.Alpa+'</span>' : 'Belum ada data'}</td>
+            <td>${cat.length? cat.map(c=>'• ['+esc(c.kategori)+'] '+esc(c.isi)).join('<br>') : '—'}</td>
+            <td>${pen.length? pen.map(p=>'• '+esc(p.kebutuhan)+' ('+p.status+')').join('<br>') : '—'}</td>
+          </tr>`; }).join('')}
+      </table></div>
+      <p style="margin-top:14px; font-size:12.5px">Dicetak dari SIPANTAU KELAS v1.0 pada ${waktuSekarang()} oleh ${esc(sesi? sesi.nama:'—')} (${esc(sesi? sesi.peran:'—')}).</p>
+    </div>`;
+}
+
+/* ---------------- RIWAYAT PERUBAHAN ---------------- */
+function renderRiwayat(){
+  const el = document.getElementById('page-riwayat');
+  el.innerHTML = `
+    <h2>Riwayat Perubahan</h2>
+    <p class="desc">Setiap pencatatan dan perubahan data penting tercatat di sini agar dapat dipertanggungjawabkan — termasuk siapa yang melakukan verifikasi dokumen dan kapan.</p>
+    <div class="card"><div class="table-scroll"><table>
+      <tr><th>Waktu</th><th>Pengguna</th><th>Peran</th><th>Aktivitas</th><th>Rincian</th></tr>
+      ${DB.riwayat.length? DB.riwayat.map(r=>`<tr><td style="white-space:nowrap">${esc(r.waktu)}</td><td>${esc(r.pengguna)}</td><td>${esc(r.peran)}</td><td><b>${esc(r.aksi)}</b></td><td>${esc(r.detail)}</td></tr>`).join('') : '<tr><td colspan="5" class="kosong">Belum ada riwayat.</td></tr>'}
+    </table></div></div>`;
+}
+
+init();
+</script>
+</body>
+</html>
