@@ -97,6 +97,7 @@ tr:last-child td{border-bottom:none}
 .toolbar{display:flex; gap:10px; flex-wrap:wrap; align-items:end; margin-bottom:14px}
 .toolbar .grow{flex:1; min-width:170px}
 .catatan-item{border:1px solid var(--abu-garis); border-radius:12px; padding:13px 15px; margin-bottom:10px; background:#fff}
+.btn[disabled]{opacity:.55; cursor:not-allowed}
 .catatan-item .meta{font-size:11.5px; color:var(--abu)}
 .kosong{text-align:center; color:var(--abu); padding:26px 10px; font-size:13px}
 @media (max-width:900px){ .duo{grid-template-columns:1fr} }
@@ -142,7 +143,7 @@ tr:last-child td{border-bottom:none}
       <div><label>Kata Sandi</label><input id="inPass" type="password" autocomplete="current-password" required placeholder="••••••••"></div>
       <button class="btn" type="submit">Masuk</button>
     </form>
-    <p class="versi">SIPANTAU KELAS v1.0 • Karya Digital Muhammad Akbar. M<br><span id="modeLogin">Memeriksa konfigurasi server…</span></p>
+    <p class="versi">SIPANTAU KELAS v1.1 • Karya Digital Muhammad Akbar. M<br><span id="modeLogin">Memeriksa konfigurasi server…</span></p>
   </div>
 </div>
 
@@ -188,13 +189,14 @@ tr:last-child td{border-bottom:none}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* ============================================================
-   SIPANTAU KELAS v1.0 — Jalur B (GitHub + Supabase + Vercel)
+   SIPANTAU KELAS v1.1 — Jalur B (GitHub + Supabase + Vercel)
+   v1.1: Fitur Impor Peserta Didik (CSV) di halaman Data Siswa.
    Dual-mode: (1) Mode Supabase bila /api/config menyediakan
    SUPABASE_URL & SUPABASE_ANON_KEY dari Environment Variables
    Vercel; (2) Mode Demo lokal (localStorage, data contoh)
    bila belum dikonfigurasi — untuk uji coba LK-3/LK-4.
    ============================================================ */
-const VERSI = 'v1.0';
+const VERSI = 'v1.1';
 const STATUS_PRESENSI = ['Hadir','Sakit','Izin','Alpa','Terlambat'];
 const KATEGORI_CATATAN = ['Kedisiplinan','Perilaku','Akademik','Positif / Prestasi','Perlu Perhatian'];
 let MODE = 'demo';
@@ -337,7 +339,7 @@ async function muatDariSupabase(){
   const kelasRows = await ambil('kelas');
   const kelas = kelasRows[0] || {id:null, nama:'—', jurusan:'—', tahun:'—'};
   const siswaRows = await ambil('siswa');
-  const siswa = siswaRows.filter(s=>!kelas.id || s.kelas_id===kelas.id).map(s=>({id:s.id, nama:s.nama, nis:s.nis, jk:s.jk}));
+  const siswa = siswaRows.filter(s=>!kelas.id || s.kelas_id===kelas.id).map(s=>({id:s.id, nama:s.nama, nis:s.nis, nisn:s.nisn||'', jk:s.jk}));
   const presRows = await ambil('presensi');
   const presensi = {};
   presRows.forEach(r=>{ if(!presensi[r.tanggal]) presensi[r.tanggal]={}; presensi[r.tanggal][r.siswa_id]=r.status; });
@@ -443,7 +445,7 @@ function renderSiswa(){
       const pen = DB.pendampingan.filter(p=>p.siswaId===s.id);
       profil = `<div class="card" style="margin-top:16px">
         <b style="font-size:16px; color:var(--biru-tua)">${esc(s.nama)}</b>
-        <p class="meta" style="color:var(--abu); font-size:12.5px">NIS ${esc(s.nis)} • ${s.jk==='L'?'Laki-laki':'Perempuan'} • Kelas ${esc(DB.kelas.nama)} • ${esc(DB.kelas.jurusan)}</p>
+        <p class="meta" style="color:var(--abu); font-size:12.5px">NIS ${esc(s.nis)} • NISN ${esc(s.nisn||'—')} • ${s.jk==='L'?'Laki-laki':'Perempuan'} • Kelas ${esc(DB.kelas.nama)} • ${esc(DB.kelas.jurusan)}</p>
         <p style="margin-top:8px">Kehadiran tercatat: Hadir/Terlambat ${hadir.hadir} • Sakit ${hadir.Sakit} • Izin ${hadir.Izin} • Alpa ${hadir.Alpa} dari ${hadir.total} hari tercatat.</p>
         <p style="margin-top:6px"><b>Catatan perkembangan (${cat.length}):</b></p>
         ${cat.length? cat.map(c=>`<p>• [${esc(c.kategori)}] ${esc(c.isi)} <span style="color:var(--abu); font-size:12px">— ${esc(c.tanggal)}, ${esc(c.oleh)}</span></p>`).join('') : '<p style="color:var(--abu)">Belum ada catatan.</p>'}
@@ -459,8 +461,8 @@ function renderSiswa(){
       <div class="grow"><label>Cari nama peserta didik</label><input id="cariSiswa" value="${esc(cari)}" oninput="renderSiswa(); jagaFokusCari()" placeholder="Ketik nama…"></div>
     </div>
     <div class="card"><div class="table-scroll"><table>
-      <tr><th>No</th><th>Nama</th><th>NIS</th><th>L/P</th><th></th></tr>
-      ${daftar.map((s,i)=>`<tr><td>${i+1}</td><td>${esc(s.nama)}</td><td>${esc(s.nis)}</td><td>${esc(s.jk)}</td><td><button class="btn sekunder kecil" onclick="siswaTerpilih='${s.id}'; renderSiswa()">Detail</button></td></tr>`).join('') || '<tr><td colspan="5" class="kosong">Tidak ditemukan.</td></tr>'}
+      <tr><th>No</th><th>Nama</th><th>NIS</th><th>NISN</th><th>L/P</th><th></th></tr>
+      ${daftar.map((s,i)=>`<tr><td>${i+1}</td><td>${esc(s.nama)}</td><td>${esc(s.nis)}</td><td>${esc(s.nisn||'—')}</td><td>${esc(s.jk)}</td><td><button class="btn sekunder kecil" onclick="siswaTerpilih='${s.id}'; renderSiswa()">Detail</button></td></tr>`).join('') || '<tr><td colspan="6" class="kosong">Tidak ditemukan.</td></tr>'}
     </table></div></div>
     ${profil}
     ${bolehKelolaSiswa()? `<div class="card" style="margin-top:16px"><b>Tambah Peserta Didik</b>
@@ -469,9 +471,11 @@ function renderSiswa(){
           <div><label>Nama lengkap</label><input id="tsNama" required></div>
           <div><label>NIS</label><input id="tsNis" required></div>
         </div>
+        <div><label>NISN (opsional)</label><input id="tsNisn" inputmode="numeric"></div>
         <div><label>Jenis kelamin</label><select id="tsJk"><option value="L">Laki-laki</option><option value="P">Perempuan</option></select></div>
         <button class="btn">Simpan Peserta Didik</button>
       </form></div>` : '<p class="desc" style="margin-top:12px">Peran Anda dapat melihat data siswa; pengelolaan data dilakukan Administrator / Wali Kelas.</p>'}
+    ${bolehKelolaSiswa()? htmlKartuImpor() : ''}
   `;
 }
 function jagaFokusCari(){ const i=document.getElementById('cariSiswa'); if(i){ i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
@@ -480,21 +484,176 @@ function hitungSiswa(id){
   Object.values(DB.presensi).forEach(hari=>{ const st = hari[id]; if(st){ h.total++; if(st==='Hadir'||st==='Terlambat') h.hadir++; else h[st]++; } });
   return h;
 }
+async function insertSiswaServer(payload){
+  let r = await sb.from('siswa').insert(payload).select();
+  if(r.error && /nisn/i.test(r.error.message||'')){
+    // Kolom nisn belum ada di server (impor-data-awal.sql belum dijalankan):
+    // ulangi tanpa NISN agar penyimpanan tidak gagal total.
+    const tanpa = (o)=>{ const c = Object.assign({}, o); delete c.nisn; return c; };
+    const r2 = await sb.from('siswa').insert(Array.isArray(payload)? payload.map(tanpa) : tanpa(payload)).select();
+    if(!r2.error) r2.nisnDropped = true;
+    return r2;
+  }
+  return r;
+}
 async function tambahSiswa(e){
   e.preventDefault();
   const nama = document.getElementById('tsNama').value.trim();
   const nis = document.getElementById('tsNis').value.trim();
+  const nisn = document.getElementById('tsNisn').value.trim();
   const jk = document.getElementById('tsJk').value;
   if(!nama || !nis) return false;
   let id = 's'+Date.now();
   if(MODE==='supabase' && sb){
-    const {data, error} = await sb.from('siswa').insert({kelas_id:DB.kelas.id, nama, nis, jk}).select().single();
-    if(error){ toast('Gagal menyimpan: '+error.message); return false; }
-    id = data.id;
+    const r = await insertSiswaServer({kelas_id:DB.kelas.id, nama, nis, nisn: nisn||null, jk});
+    if(r.error){ toast('Gagal menyimpan: '+r.error.message); return false; }
+    id = r.data[0].id;
+    if(r.nisnDropped) toast('Tersimpan tanpa NISN: kolom nisn belum ada di server.');
   }
-  DB.siswa.push({id, nama, nis, jk});
+  DB.siswa.push({id, nama, nis, nisn, jk});
   await catatRiwayat('Tambah peserta didik', nama+' (NIS '+nis+') ditambahkan ke Kelas '+DB.kelas.nama);
   simpanLokal(); renderSemua(); toast('Peserta didik ditambahkan.'); return false;
+}
+
+/* ---------------- IMPOR PESERTA DIDIK (CSV) ---------------- */
+let imporState = null; // {namaBerkas, baris:[{nama,nis,nisn,jk,status,catatan}]}
+
+/* === IMPOR-PARSER-MULAI === */
+function parseCSV(teks){
+  teks = String(teks||'').replace(/^\uFEFF/, '');
+  const barisPertama = teks.split(/\r?\n/).find(b=>b.trim().length) || '';
+  const pemisah = (barisPertama.split(';').length > barisPertama.split(',').length) ? ';' : ',';
+  const hasil = []; let row = []; let sel = ''; let dalamKutip = false;
+  for(let i=0;i<teks.length;i++){
+    const c = teks[i];
+    if(dalamKutip){
+      if(c==='"'){ if(teks[i+1]==='"'){ sel+='"'; i++; } else dalamKutip = false; }
+      else sel += c;
+    }
+    else if(c==='"') dalamKutip = true;
+    else if(c===pemisah){ row.push(sel); sel=''; }
+    else if(c==='\n'){ row.push(sel); hasil.push(row); row=[]; sel=''; }
+    else if(c!=='\r') sel += c;
+  }
+  row.push(sel); hasil.push(row);
+  return hasil.map(r=>r.map(x=>String(x).trim())).filter(r=>r.some(x=>x!==''));
+}
+function normalJK(v){
+  const t = String(v||'').trim().toLowerCase();
+  if(t==='l' || t==='laki-laki' || t==='laki') return 'L';
+  if(t==='p' || t==='perempuan') return 'P';
+  return '';
+}
+function analisisCSV(teks){
+  const tabel = parseCSV(teks);
+  if(!tabel.length) return [];
+  let idxNama=0, idxNis=1, idxNisn=2, idxJk=3, mulai=0;
+  for(let i=0;i<Math.min(3, tabel.length);i++){
+    const sel = tabel[i].map(c=>c.toLowerCase().replace(/\s+/g,' '));
+    const iNisn = sel.findIndex(c=>c.includes('nisn'));
+    const iNama = sel.findIndex(c=>c.includes('nama'));
+    const iNis  = sel.findIndex(c=>c==='nis');
+    const iJk   = sel.findIndex(c=>c==='l/p' || c==='jk' || c.includes('jenis kelamin') || c==='gender');
+    if(iNama>=0 && (iNisn>=0 || iNis>=0 || iJk>=0)){ idxNama=iNama; idxNisn=iNisn; idxNis=iNis; idxJk=iJk; mulai=i+1; break; }
+  }
+  const ambil = (r,idx)=> (idx>=0 && idx<r.length) ? r[idx] : '';
+  return tabel.slice(mulai).map(r=>({
+    nama: ambil(r,idxNama).replace(/\s+/g,' '),
+    nis: ambil(r,idxNis),
+    nisn: ambil(r,idxNisn).replace(/\s+/g,''),
+    jk: normalJK(ambil(r,idxJk))
+  }));
+}
+/* === IMPOR-PARSER-SELESAI === */
+
+function htmlKartuImpor(){
+  return `<div class="card" style="margin-top:16px"><b>Impor Peserta Didik (CSV)</b>
+    <p class="desc" style="margin-top:6px">Kelas tujuan impor: <b>${esc(DB.kelas.nama)}</b> — kelas yang sedang tampil di aplikasi. Gunakan templat CSV (kolom Nama, NIS, NISN, L/P; pemisah titik koma atau koma). Berkas absen berformat lembar cetak tidak dipakai di sini — untuk data awal massal gunakan paket impor SQL sekali pakai.</p>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:end">
+      <button class="btn sekunder" onclick="unduhTemplatImpor()">Unduh Templat CSV</button>
+      <div><label>Pilih berkas CSV</label><input type="file" id="impFile" accept=".csv,text/csv,text/plain" onchange="bacaImpor(event)"></div>
+    </div>
+    ${imporState? htmlPratinjauImpor() : ''}
+  </div>`;
+}
+function unduhTemplatImpor(){
+  const isi = '\uFEFFNama;NIS;NISN;L/P\nContoh Andi Pratama;26001;0098765432;L\nContoh Siti Rahmawati;26002;0098765433;P\n';
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([isi], {type:'text/csv;charset=utf-8'}));
+  a.download = 'templat-impor-siswa.csv';
+  a.click(); URL.revokeObjectURL(a.href);
+}
+function bacaImpor(ev){
+  const file = ev.target.files && ev.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    const mentah = analisisCSV(reader.result);
+    const nisAda = new Set(DB.siswa.map(s=>String(s.nis||'').trim()).filter(Boolean));
+    const nisBerkas = new Set();
+    const baris = mentah.map(r=>{
+      let status = 'siap', catatan = '';
+      if(!r.nama){ status='tidak-valid'; catatan='Nama kosong'; }
+      else if(!r.nis){ status='tidak-valid'; catatan='NIS kosong'; }
+      else if(!r.jk){ status='tidak-valid'; catatan='L/P tidak terbaca — isi L atau P'; }
+      else if(nisAda.has(r.nis)){ status='duplikat'; catatan='NIS sudah terdaftar di kelas ini'; }
+      else if(nisBerkas.has(r.nis)){ status='duplikat'; catatan='NIS ganda di dalam berkas'; }
+      if(status==='siap') nisBerkas.add(r.nis);
+      return {nama:r.nama, nis:r.nis, nisn:r.nisn, jk:r.jk, status, catatan};
+    });
+    imporState = {namaBerkas:file.name, baris};
+    const siap = baris.filter(b=>b.status==='siap').length;
+    renderSiswa();
+    toast('Berkas terbaca: '+baris.length+' baris, '+siap+' siap diimpor.');
+  };
+  reader.onerror = ()=> toast('Gagal membaca berkas.');
+  reader.readAsText(file);
+}
+function htmlPratinjauImpor(){
+  const b = imporState.baris;
+  const siap = b.filter(x=>x.status==='siap').length;
+  const dup = b.filter(x=>x.status==='duplikat').length;
+  const inv = b.filter(x=>x.status==='tidak-valid').length;
+  const maks = 100;
+  const warna = {'siap':'var(--hijau, #1e9e62)', 'duplikat':'#d97706', 'tidak-valid':'#dc2626'};
+  const label = {'siap':'Siap', 'duplikat':'Duplikat — dilewati', 'tidak-valid':'Tidak valid — dilewati'};
+  return `<div style="margin-top:14px">
+    <p><b>Pratinjau impor</b> — berkas ${esc(imporState.namaBerkas)}: ${b.length} baris • <b>${siap} siap</b>${dup? ' • '+dup+' duplikat':''}${inv? ' • '+inv+' tidak valid':''}</p>
+    ${MODE==='supabase' && !DB.kelas.id ? '<p class="desc" style="color:#dc2626">Kelas aktif belum ada di server, impor belum dapat dijalankan.</p>' : ''}
+    <div class="table-scroll" style="margin-top:8px"><table>
+      <tr><th>No</th><th>Nama</th><th>NIS</th><th>NISN</th><th>L/P</th><th>Keterangan</th></tr>
+      ${b.slice(0,maks).map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.nama)||'—'}</td><td>${esc(x.nis)||'—'}</td><td>${esc(x.nisn)||'—'}</td><td>${esc(x.jk)||'—'}</td><td><span style="color:${warna[x.status]}"><b>${label[x.status]}</b></span>${x.catatan? ' — '+esc(x.catatan):''}</td></tr>`).join('')}
+    </table></div>
+    ${b.length>maks? `<p class="desc">Hanya ${maks} baris pertama yang ditampilkan; seluruh ${b.length} baris tetap diproses.</p>` : ''}
+    <p style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap">
+      <button class="btn" onclick="jalankanImpor()" ${siap && !(MODE==='supabase' && !DB.kelas.id)? '' : 'disabled'}>Impor ${siap} Siswa ke Kelas ${esc(DB.kelas.nama)}</button>
+      <button class="btn sekunder" onclick="imporState=null; renderSiswa()">Batal</button>
+    </p>
+  </div>`;
+}
+async function jalankanImpor(){
+  if(!imporState) return;
+  const siap = imporState.baris.filter(b=>b.status==='siap');
+  if(!siap.length) return;
+  if(MODE==='supabase' && sb && !DB.kelas.id){ toast('Kelas aktif belum ada di server.'); return; }
+  const namaBerkas = imporState.namaBerkas;
+  let nisnJatuh = false;
+  if(MODE==='supabase' && sb){
+    for(let i=0;i<siap.length;i+=100){
+      const potong = siap.slice(i, i+100);
+      const payload = potong.map(b=>({kelas_id:DB.kelas.id, nama:b.nama, nis:b.nis, nisn:b.nisn||null, jk:b.jk}));
+      const r = await insertSiswaServer(payload);
+      if(r.error){ toast('Impor berhenti sebelum baris ke-'+(i+1)+': '+r.error.message); return; }
+      if(r.nisnDropped) nisnJatuh = true;
+      (r.data||[]).forEach((d,j)=> DB.siswa.push({id:d.id, nama:potong[j].nama, nis:potong[j].nis, nisn:potong[j].nisn, jk:potong[j].jk}));
+    }
+  } else {
+    siap.forEach((b,j)=> DB.siswa.push({id:'s'+Date.now()+'-'+j, nama:b.nama, nis:b.nis, nisn:b.nisn, jk:b.jk}));
+  }
+  await catatRiwayat('Impor peserta didik', siap.length+' peserta didik diimpor dari berkas '+namaBerkas+' ke Kelas '+DB.kelas.nama+(nisnJatuh? ' (NISN tidak tersimpan: kolom nisn belum ada di server)':''));
+  imporState = null;
+  simpanLokal(); renderSemua();
+  toast('Berhasil mengimpor '+siap.length+' peserta didik.'+(nisnJatuh? ' Catatan: NISN belum tersimpan di server — jalankan baris SQL kolom nisn dari impor-data-awal.sql.':''));
 }
 
 /* ---------------- PRESENSI ---------------- */
@@ -739,7 +898,7 @@ function renderLaporan(){
             <td>${pen.length? pen.map(p=>'• '+esc(p.kebutuhan)+' ('+p.status+')').join('<br>') : '—'}</td>
           </tr>`; }).join('')}
       </table></div>
-      <p style="margin-top:14px; font-size:12.5px">Dicetak dari SIPANTAU KELAS v1.0 pada ${waktuSekarang()} oleh ${esc(sesi? sesi.nama:'—')} (${esc(sesi? sesi.peran:'—')}).</p>
+      <p style="margin-top:14px; font-size:12.5px">Dicetak dari SIPANTAU KELAS ${VERSI} pada ${waktuSekarang()} oleh ${esc(sesi? sesi.nama:'—')} (${esc(sesi? sesi.peran:'—')}).</p>
     </div>`;
 }
 

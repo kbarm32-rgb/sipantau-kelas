@@ -1,9 +1,18 @@
-SIPANTAU KELAS v2026-11-03-v1.0
+SIPANTAU KELAS v2026-11-03-v1.1
 Paket Jalur B: GitHub + Supabase + Vercel (dual-mode Demo/Supabase)
+Baru pada v1.1 (3 November 2026):
+- Fitur Impor Peserta Didik (CSV) pada halaman Data Siswa: unduh templat,
+  unggah berkas, pratinjau dengan pemeriksaan duplikat NIS dan validasi
+  L/P, lalu simpan massal ke kelas yang sedang tampil (Mode Server dan
+  Mode Demo). Tercatat pada Riwayat Perubahan.
+- Kolom NISN tampil pada tabel Data Siswa dan profil peserta didik;
+  formulir tambah manual menerima NISN (opsional).
+- supabase/schema.sql: kolom nisn pada tabel siswa. Pemasangan yang
+  sudah berjalan cukup menjalankan satu baris alter table (lihat README).
 Isi paket (5 berkas):
-1. index.html — aplikasi SIPANTAU KELAS v1.0 (8 bagian sesuai LK-2)
+1. index.html — aplikasi SIPANTAU KELAS v1.1 (8 bagian sesuai LK-2 + impor CSV)
 2. api/config.js — jembatan Environment Variables Vercel (SUPABASE_URL, SUPABASE_ANON_KEY)
 3. supabase/schema.sql — skema database, RLS, storage, data contoh, template akun
 4. README.md — ringkasan paket dan langkah penerapan
 5. VERSION.txt — berkas ini
-Penanda versi di aplikasi: teks "SIPANTAU KELAS v1.0" pada kaki halaman login dan frasa "Jalur B (GitHub + Supabase + Vercel)" pada komentar di awal berkas index.html serta skrip utamanya.
+Penanda versi di aplikasi: teks "SIPANTAU KELAS v1.1" pada kaki halaman login dan frasa "Jalur B (GitHub + Supabase + Vercel)" pada komentar di awal berkas index.html serta skrip utamanya.

@@ -1,4 +1,4 @@
-# SIPANTAU KELAS v1.0 — Jalur B (GitHub + Supabase + Vercel)
+# SIPANTAU KELAS v1.1 — Jalur B (GitHub + Supabase + Vercel)
 
 Sistem Informasi Pemantauan Kehadiran dan Perkembangan Peserta Didik.
 Karya Digital: **Muhammad Akbar. M — SMKN 1 Maros** (Informatika / Fase E),
@@ -18,7 +18,7 @@ untuk Gerakan 10.000 Karya Digital Guru Tahun 2026 (LK-1 s.d. LK-6).
 
 | Berkas | Fungsi |
 | --- | --- |
-| `index.html` | Seluruh aplikasi (8 bagian sesuai LK-2) |
+| `index.html` | Seluruh aplikasi (8 bagian sesuai LK-2) + Impor Peserta Didik (CSV) |
 | `api/config.js` | Vercel Function pembaca Environment Variables |
 | `supabase/schema.sql` | Skema tabel, RLS, bucket storage, data contoh, template akun |
 | `VERSION.txt` | Penanda versi paket |
@@ -45,3 +45,41 @@ untuk Gerakan 10.000 Karya Digital Guru Tahun 2026 (LK-1 s.d. LK-6).
   tangan sementara dari aplikasi.
 - Data contoh pada skema (Kelas X RPL 1, 15 nama fiktif) boleh dihapus
   setelah data asli dimasukkan.
+
+## Baru pada v1.1 — Impor Peserta Didik (CSV)
+
+Di halaman **Data Siswa** (peran Administrator / Wali Kelas) kini ada kartu
+**Impor Peserta Didik (CSV)**:
+
+1. Unduh templat CSV dari aplikasi, isi dengan daftar siswa
+   (kolom Nama, NIS, NISN, L/P — pemisah titik koma atau koma).
+2. Unggah berkasnya; aplikasi menampilkan pratinjau: baris yang NIS-nya
+   sudah terdaftar atau ganda di dalam berkas dan baris tidak valid
+   (nama/NIS kosong, L/P tidak terbaca) ditandai dan dilewati.
+3. Tekan **Impor** — siswa tersimpan massal ke kelas yang sedang tampil
+   dan tercatat pada Riwayat Perubahan.
+
+Catatan:
+
+- Impor masuk ke **kelas yang sedang tampil** di aplikasi
+  (SIPANTAU KELAS menampilkan satu kelas aktif dalam satu waktu).
+- NISN memerlukan kolom `nisn` pada tabel `siswa`. Pemasangan baru dari
+  `schema.sql` v1.1 sudah memuatnya. Untuk pemasangan v1.0 yang sudah
+  berjalan, jalankan sekali di SQL Editor:
+  `alter table public.siswa add column if not exists nisn text;`
+  (baris yang sama juga menjadi langkah pertama impor-data-awal.sql).
+  Bila kolom ini belum ada, aplikasi tetap menyimpan siswa tanpa NISN
+  dan memberi tahu lewat pesan di layar.
+- Berkas absen sekolah yang berformat lembar cetak (banyak sheet,
+  kop berlapis) tidak dibaca oleh fitur ini; gunakan templat CSV di atas.
+  Untuk memuat data awal massal satu sekolah, gunakan paket impor SQL
+  sekali pakai yang disiapkan terpisah.
+
+## Pembaruan dari v1.0 ke v1.1 pada pemasangan yang sudah berjalan
+
+1. Di repo GitHub, ganti berkas `index.html` (dan `VERSION.txt`) dengan
+   versi dari paket ini, lalu commit — Vercel menerapkan otomatis.
+2. Di Supabase SQL Editor, jalankan baris `alter table` kolom `nisn`
+   pada catatan di atas (sekali saja; aman diulang).
+3. Buka aplikasi, Ctrl+F5, pastikan kaki halaman login bertuliskan
+   "SIPANTAU KELAS v1.1", lalu coba impor dengan templat contoh.
